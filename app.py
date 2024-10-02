@@ -5,6 +5,7 @@ import json
 from groq import Groq
 from dotenv import load_dotenv
 
+#load environment variables
 load_dotenv()
 
 app = FastAPI()
