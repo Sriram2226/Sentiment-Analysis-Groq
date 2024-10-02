@@ -1,0 +1,5 @@
+uvicorn app:app --reload
+
+curl -X POST -F "file=@customer_reviews.xlsx" http://localhost:8000/read_reviews
+
+env/Scripts/Activate   
