@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 #load environment variables
 load_dotenv()
 
+#hello
+
 app = FastAPI()
 
 @app.get("/")
