@@ -1,4 +1,3 @@
-Here is the documentation for your project:
 
 ---
 
