@@ -80,22 +80,6 @@ This file contains the frontend built using Streamlit. It allows users to upload
 
 ---
 
-### **4. requirements.txt**
-
-This file contains the list of required Python packages to run the project. Example content:
-
-```
-fastapi==0.95.0
-groq==0.5.1
-pandas==1.5.3
-requests==2.28.2
-streamlit==1.14.0
-python-dotenv==0.21.0
-uvicorn==0.18.2
-```
-
----
-
 ## **Setup Instructions**
 
 ### **1. Install Dependencies**
@@ -104,12 +88,12 @@ To get started, clone the repository and install the required dependencies.
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/Sriram2226-Sentiment-Analysis-Groq.git
+   git clone https://github.com/Sriram2226-Sentiment-Analysis-Groq.git
    ```
    
 2. Navigate to the project directory:
    ```
-   cd Sriram2226-Sentiment-Analysis-Groq
+   cd Sentiment-Analysis-Groq
    ```
 
 3. Create a virtual environment:
