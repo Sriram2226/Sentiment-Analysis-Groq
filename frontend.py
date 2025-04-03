@@ -11,7 +11,8 @@ st.write(
 uploaded_file = st.file_uploader("Upload a file", type=["csv", "xlsx"])
 
 # Backend API URL
-backend_url = "http://localhost:8000/read_reviews"
+# backend_url = "http://localhost:8000/read_reviews"
+backend_url = "https://sentiment-analysis-groq.onrender.com/read_reviews"
 
 if uploaded_file:
     # Display file information

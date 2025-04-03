@@ -50,20 +50,20 @@ def read_reviews(file: UploadFile):
     client = Groq(
         api_key=os.getenv("GROQ_API_KEY")
     )
-    # Send the reviews to the Groq API for sentiment analysis
+    
+
     chat_completion = client.chat.completions.create(
         messages=[
             {
                 "role": "system",
-                "content": "You are a DATA ANALYST capable of sentiment analysis from a  list of reviews that responds in only JSON format. Make sure to stick to JSON and output a valid JSON and provide response for all the reviews in the list. The JSON schema is as follows:{\"<list_index>(in double quotes)\": {\"POSITIVE\": numeric(0-1), \"NEGATIVE\": numeric(0-1), \"NEUTRAL\": numeric(0-1)}}",
+                "content": "You are a DATA ANALYST capable of sentiment analysis from a  list of reviews that responds in only JSON format. Make sure to stick to JSON and output a valid JSON and provide response for all the reviews in the list. The JSON schema is as follows:{\"<list_index>(in double quotes)\": {\"POSITIVE\": numeric(0-1), \"NEGATIVE\": numeric(0-1), \"NEUTRAL\": numeric(0-1)}}"
             },
             {
                 "role": "user",
-                "content": f"{formatted_reviews}",
-            },
+                "content": f"{formatted_reviews}"
+            }
         ],
-        model="mixtral-8x7b-32768",
-        max_tokens=32768,
+        model="llama-3.3-70b-versatile",
     )
     
     try:
