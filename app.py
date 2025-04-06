@@ -4,6 +4,8 @@ import os
 import json
 from groq import Groq
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
+
 
 #load environment variables
 load_dotenv()
@@ -11,6 +13,13 @@ load_dotenv()
 #hello
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://sentimentreview.streamlit.app/"],  # Replace "*" with your Streamlit app URL if needed
+    allow_credentials=True,
+    allow_methods=["https://sentimentreview.streamlit.app/"],
+    allow_headers=["https://sentimentreview.streamlit.app/"],
+)
 
 @app.get("/")
 def read_root():
