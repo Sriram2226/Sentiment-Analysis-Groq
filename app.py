@@ -39,6 +39,15 @@ def read_reviews(file: UploadFile):
     Raises:
         HTTPException: If the file format is incorrect or if the column 'Review' is not found in the file.
     """
+    #Input log checking for streamlit file
+    print(f"Received file: {file.filename}")
+    try:
+        contents = file.file.read()
+        print(f"File size: {len(contents)} bytes")
+        file.file.seek(0)  # reset pointer after reading
+    except Exception as e:
+        print("Error reading file:", e)
+        raise HTTPException(status_code=400, detail="Error reading file")
     # Check if the file is in the correct format
     if file.filename.endswith(".xlsx"):
         df = pd.read_excel(file.file)
