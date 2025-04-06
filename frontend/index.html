@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sentiment Review Analyzer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Sentiment Review Analyzer</h1>
+        <form id="upload-form">
+            <input type="file" id="file-input" accept=".csv, .xlsx" required />
+            <button type="submit">Analyze</button>
+        </form>
+
+        <div id="results" class="hidden">
+            <h2>Sentiment Analysis Result</h2>
+            <p><strong>Positive:</strong> <span id="positive"></span></p>
+            <p><strong>Negative:</strong> <span id="negative"></span></p>
+            <p><strong>Neutral:</strong> <span id="neutral"></span></p>
+        </div>
+
+        <div id="error" class="error hidden"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

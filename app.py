@@ -15,10 +15,10 @@ load_dotenv()
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://sentimentreview.streamlit.app/"],  # Replace "*" with your Streamlit app URL if needed
+    allow_origins=["*"],  # Replace "*" with your Streamlit app URL if needed
     allow_credentials=True,
-    allow_methods=["https://sentimentreview.streamlit.app/"],
-    allow_headers=["https://sentimentreview.streamlit.app/"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")
