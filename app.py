@@ -1,21 +1,23 @@
 from fastapi import FastAPI, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 import pandas as pd
 import os
 import json
+import re
+from io import BytesIO
 from groq import Groq
-from dotenv import load_dotenv
-from fastapi.middleware.cors import CORSMiddleware
 
-
-#load environment variables
+# Load environment variables
 load_dotenv()
 
-#hello
-
+# Initialize FastAPI app
 app = FastAPI()
+
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace "*" with your Streamlit app URL if needed
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -23,93 +25,96 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"How to use": "API takes in a CSV or EXCEL file containing reviews with a column named 'Review' and returns the average POSITIVE, NEGATIVE and NEUTRAL sentiment score of the reviews."}
+    return {
+        "How to use": "POST a CSV or EXCEL file with a column named 'Review' to /read_reviews. "
+                      "The API returns average POSITIVE, NEGATIVE, and NEUTRAL sentiment scores."
+    }
 
 @app.post("/read_reviews")
 def read_reviews(file: UploadFile):
-    """
-    This endpoint takes in a CSV or EXCEL file containing reviews with a column named 'Review' and returns the average POSITIVE, NEGATIVE and NEUTRAL sentiment score of the reviews.
-    
-    Args:
-        file (UploadFile): The uploaded file containing the reviews.
-        
-    Returns:
-        dict: A dictionary containing the average POSITIVE, NEGATIVE and NEUTRAL sentiment scores.
-        
-    Raises:
-        HTTPException: If the file format is incorrect or if the column 'Review' is not found in the file.
-    """
-    #Input log checking for streamlit file
+    # Log file info
     print(f"Received file: {file.filename}")
+
     try:
         contents = file.file.read()
         print(f"File size: {len(contents)} bytes")
-        file.file.seek(0)  # reset pointer after reading
     except Exception as e:
         print("Error reading file:", e)
-        raise HTTPException(status_code=400, detail="Error reading file")
-    # Check if the file is in the correct format
-    if file.filename.endswith(".xlsx"):
-        df = pd.read_excel(file.file)
-    elif file.filename.endswith(".csv"):
-        df = pd.read_csv(file.file)
-    else:
-        raise HTTPException(status_code=400, detail="Incorrect format of input file")
-    
-    try:
-        # Extract the reviews from the file
-        reviews = list(df["Review"])
-        # Format the reviews in a JSON compatible format
-        formatted_reviews = ', '.join(f"{index}: '{item}'" for index, item in enumerate(reviews))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="No column 'Review' found")
-    
-    # Create a Groq client with the API key
-    client = Groq(
-        api_key=os.getenv("GROQ_API_KEY")
-    )
-    
+        raise HTTPException(status_code=400, detail="Failed to read uploaded file.")
 
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a DATA ANALYST capable of sentiment analysis from a  list of reviews that responds in only JSON format. Make sure to stick to JSON and output a valid JSON and provide response for all the reviews in the list. The JSON schema is as follows:{\"<list_index>(in double quotes)\": {\"POSITIVE\": numeric(0-1), \"NEGATIVE\": numeric(0-1), \"NEUTRAL\": numeric(0-1)}}"
-            },
-            {
-                "role": "user",
-                "content": f"{formatted_reviews}"
-            }
-        ],
-        model="llama-3.3-70b-versatile",
-    )
-    
+    # Try loading file into DataFrame
     try:
-        # Parse the sentiment analysis response from JSON
-        str = chat_completion.choices[0].message.content
-        review  = json.loads(str)
-        
-        # Compute the average sentiment scores for each review
-        total = len(review)
-        positive_sum = 0
-        negative_sum = 0
-        neutral_sum = 0
-        for _, value in review.items():
-            positive_sum += value["POSITIVE"]
-            negative_sum += value["NEGATIVE"]
-            neutral_sum += value["NEUTRAL"]
-        average_positive = positive_sum / total
-        average_negative = negative_sum / total
-        average_neutral = neutral_sum / total
-        
-        # Create a dictionary with the average sentiment scores
-        analysis = {
-            "positive": average_positive,
-            "negative": average_negative,
-            "neutral": average_neutral
-        }
-        
-        return {"data": analysis}
+        if file.filename.endswith(".xlsx"):
+            df = pd.read_excel(BytesIO(contents))
+        elif file.filename.endswith(".csv"):
+            df = pd.read_csv(BytesIO(contents))
+        else:
+            raise ValueError("Unsupported file format.")
     except Exception as e:
-        print(e)
-        raise HTTPException(status_code=400, detail="Reupload file")
+        print("File loading error:", e)
+        raise HTTPException(status_code=400, detail="Error reading file content or incorrect format.")
+
+    # Validate 'Review' column
+    if "Review" not in df.columns:
+        raise HTTPException(status_code=400, detail="Missing 'Review' column in the file.")
+
+    # Extract reviews and format for model
+    reviews = df["Review"].dropna().astype(str).tolist()
+    if not reviews:
+        raise HTTPException(status_code=400, detail="No valid reviews found in the file.")
+
+    formatted_reviews = ', '.join(f"{i}: '{r}'" for i, r in enumerate(reviews))
+    print(f"Formatted Reviews:\n{formatted_reviews[:500]}...")  # Print a snippet for debug
+
+    # Initialize Groq client
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+    # Query model
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a DATA ANALYST capable of sentiment analysis from a list of reviews. "
+                        "Return only JSON with this format: "
+                        "{\"0\": {\"POSITIVE\": float, \"NEGATIVE\": float, \"NEUTRAL\": float}, ...}"
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": formatted_reviews
+                }
+            ]
+        )
+
+        raw_response = response.choices[0].message.content
+        print("Raw model response:\n", raw_response)
+
+        # Extract JSON safely
+        json_str = re.search(r'\{.*\}', raw_response, re.DOTALL).group()
+        review_scores = json.loads(json_str)
+
+    except Exception as e:
+        print("Model response parsing error:", e)
+        raise HTTPException(status_code=400, detail="Invalid response from sentiment model. Try reuploading.")
+
+    # Calculate average sentiment
+    try:
+        total = len(review_scores)
+        pos_sum = sum(item["POSITIVE"] for item in review_scores.values())
+        neg_sum = sum(item["NEGATIVE"] for item in review_scores.values())
+        neu_sum = sum(item["NEUTRAL"] for item in review_scores.values())
+
+        analysis = {
+            "positive": round(pos_sum / total, 4),
+            "negative": round(neg_sum / total, 4),
+            "neutral": round(neu_sum / total, 4)
+        }
+
+        return {"data": analysis}
+
+    except Exception as e:
+        print("Error computing sentiment averages:", e)
+        raise HTTPException(status_code=500, detail="Failed to compute sentiment analysis.")
