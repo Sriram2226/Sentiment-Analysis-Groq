@@ -8,8 +8,8 @@ const negative = document.getElementById("negative");
 const neutral = document.getElementById("neutral");
 
 // Replace this with your actual backend URL
-// const API_URL = "https://sentiment-analysis-groq.onrender.com/read_reviews";
-const API_URL = "http://localhost:8000/read_reviews";
+const API_URL = "https://sentiment-analysis-groq.onrender.com/read_reviews";
+// const API_URL = "http://localhost:8000/read_reviews";
 
 form.addEventListener("submit", async (e) => {
     e.preventDefault();

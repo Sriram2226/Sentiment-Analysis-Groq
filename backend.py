@@ -1,4 +1,4 @@
-
+#this is the first and main backend code, contains unfixed errors in json parsing and output
 #Error and bugged code 
 from fastapi import FastAPI, UploadFile, HTTPException
 import pandas as pd
